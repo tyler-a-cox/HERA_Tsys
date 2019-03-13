@@ -14,7 +14,6 @@ hera_beam_file = '/data4/beards/instr_data/HERA_beam_nic.hmap'
 df = 1.5625  # 100 MHz / 64 averaged channels
 freqs = np.arange(100.0 + df / 2.0, 200.0, df)
 hours = np.arange(0.0, 24.0, .5)
-lsts = np.zeros_like(hours)
 pols = ['X', 'Y']  # Only have X beam, but try rotating 90 degrees for Y
 HERA_Tsky = np.zeros((len(pols), freqs.shape[0], lsts.shape[0]))
 
@@ -35,6 +34,8 @@ sky_array = np.load(gsm_file)['sky']
 
 def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
               Tsky_file = None, smoothing = False, deg = 1):
+
+    lsts = np.zeros_like(hours)
     for poli, pol in enumerate(pols):
         pol_ang = 90 * (1-poli)  # Extra rotation for X
         proj_beam = hp.projector.OrthographicProj(rot=[pol_ang,90], half_sky=True, xsize=400)
