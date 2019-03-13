@@ -62,9 +62,7 @@ def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
 
     if save_sky:
         np.savez(Tsky_file, HERA_Tsky=HERA_Tsky, freqs=freqs, lsts=lsts)
-'''
-for deg in np.linspace(1,12,10):
-        HERA_Tsky(pols, freqs, smoothing = True, deg = deg,
-                  Tsky_file = 'HERA_Tsky_{}_deg_conv.npz')
-'''
-HERA_Tsky(pols, freqs, save_sky = True, Tsky_file = '/data4/tcox/HERA_IDR2_analysis/HERA_Tsky_no_conv.npz')
+
+for deg in np.arange(1,10):
+        HERA_Tsky(pols, freqs, smoothing = True, deg = deg, save_sky=True
+                  Tsky_file = '/data4/tcox/sky_models/HERA_Tsky_{}_deg_conv.npz'.format(deg))
