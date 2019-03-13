@@ -17,7 +17,6 @@ df = 1.5625  # 100 MHz / 64 averaged channels
 freqs = np.arange(100.0 + df / 2.0, 200.0, df)
 hours = np.arange(0.0, 24.0, .5)
 pols = ['X', 'Y']  # Only have X beam, but try rotating 90 degrees for Y
-HERA_Tsky = np.zeros((len(pols), freqs.shape[0], lsts.shape[0]))
 
 # Read in HERA beam data, just use full sky for paper
 hera_beam = {}
@@ -36,8 +35,8 @@ sky_array = np.load(gsm_file)['sky']
 
 def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
               Tsky_file = None, smoothing = False, deg = 1):
-
     lsts = np.zeros_like(hours)
+    HERA_Tsky = np.zeros((len(pols), freqs.shape[0], lsts.shape[0]))
     for poli, pol in enumerate(pols):
         pol_ang = 90 * (1-poli)  # Extra rotation for X
         proj_beam = hp.projector.OrthographicProj(rot=[pol_ang,90], half_sky=True, xsize=400)
@@ -68,4 +67,4 @@ for deg in np.linspace(1,12,10):
         HERA_Tsky(pols, freqs, smoothing = True, deg = deg,
                   Tsky_file = 'HERA_Tsky_{}_deg_conv.npz')
 '''
-HERA_Tsky(pols, freqs, save_sky = True, Tsky_file = 'HERA_Tsky_no_conv.npz')
+HERA_Tsky(pols, freqs, save_sky = True, Tsky_file = '/data4/tcox/HERA_IDR2_analysis/HERA_Tsky_no_conv.npz')
