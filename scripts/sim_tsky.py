@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import healpy as hp
 import glob
 
+(latitude, longitude, elevation) = ('-30.7224', '21.4278', 1100)
+
 hera_beam_file = '/data4/beards/instr_data/HERA_beam_nic.hmap'
 
 df = 1.5625  # 100 MHz / 64 averaged channels
