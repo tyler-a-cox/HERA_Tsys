@@ -279,12 +279,12 @@ class auto_data():
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
         # Save data
-        if save_data and save_file is not None:
+        if save_npz and save_file is not None:
             np.savez(file_name, fits = self.fits,
                                 gains = self.gains,
                                 Trxr = self.Trxr)
 
-        elif save_data:
+        elif save_npz and save_file is None:
             print 'No save file given'
 
     def plot_data(self, ant, pol):
@@ -306,10 +306,7 @@ if __name__ == '__main__':
     auto_data = auto_data(data_dir='/data4/shane/data/2458536/', filestart='zen.*',
                              fileend='*HH.uvh5', autos_file='post_power_drop_autos.uvh5',f_min=50.,f_max=250.)
     auto_data.build_model(Tsky_sim)
-
-    if save_data:
-        pass
-
+    '''
     if save_plots:
         # Rxr for one antenna
         plt.figure(figsize = (16,6))
@@ -379,3 +376,4 @@ if __name__ == '__main__':
             plt.plot(plot_lsts, mdl_plot, linewidth=0.5, color=light_colors[i],label=str(int(auto_data.freqs[chan]))+' MHz')
         plt.title('Raw data and fit')
         plt.legend()
+        '''
