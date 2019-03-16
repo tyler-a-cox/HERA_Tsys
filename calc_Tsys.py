@@ -278,10 +278,17 @@ class auto_data():
                 self.fits[(ant, pol)] = (sol['g'], sol['n'])
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
+        # Save data
         if save_data and save_file is not None:
-            np.savez(file_name, )
-        elif:
-            pass
+            np.savez(file_name, fits = self.fits,
+                                gains = self.gains,
+                                Trxr = self.Trxr)
+
+        elif save_data:
+            print 'No save file given'
+
+    def plot_data(self, ant, pol):
+        pass
 
     def data2Tsky(self, key):
         poli = np.where(self.pols == key[1])[0]
@@ -292,10 +299,6 @@ class auto_data():
         return d
 
 if __name__ == '__main__':
-
-    save_data = False
-    save_plots = False
-
     hera_beam_file = '/home/shane/data/uv_beam_vivaldi.fits'
     Tsky_sim = TskySim(Tsky_file = '/data4/shane/data/HERA_Tsky_vivaldi.npz', beam_file = hera_beam_file,
                       f_min=50,f_max=250)
