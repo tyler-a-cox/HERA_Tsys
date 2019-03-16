@@ -182,7 +182,7 @@ if save_plots:
             plt.ylim([0.0, 1.1])
 	    plt.title(tittext)
             outfile = outdir + 'r2_score' + str(ant) + pols[pol] + '.png'
-            plt.savefig(outfile, dpi=300)
+            plt.savefig(outfile, dpi=200)
 
 	    r2_scores_ant.append(r2_fit_scores)
 
@@ -200,7 +200,7 @@ if save_plots:
             plt.title(tittext)
             plt.legend()
             outfile = outdir + 'data_v_LST_fit' + str(ant) + pols[pol] + '.png'
-            plt.savefig(outfile, dpi=300)
+            plt.savefig(outfile, dpi=200)
 	r2_scores_pol.append(r2_scores_ant)
 
     np.savez(outdir + 'r2_scores.npz', r2_scores = r2_scores_pol)
@@ -215,7 +215,7 @@ if save_plots:
     axarr[0].set_ylabel('Gain (Jy units)')
     axarr[-1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
     outfile = outdir + 'bandpasses.png'
-    plt.savefig(outfile, dpi=300)
+    plt.savefig(outfile, dpi=200)
 
     plt.close(fig)
     fig, axarr = plt.subplots(1, npol, sharey=True, figsize=(10, 5))
@@ -228,7 +228,7 @@ if save_plots:
     axarr[0].set_ylabel('Receiver Temp (K)')
     axarr[-1].legend(loc='center left', bbox_to_anchor=(1, 0.5))
     outfile = outdir + 'rxr_temp_per_ant.png'
-    plt.savefig(outfile, dpi=300)
+    plt.savefig(outfile, dpi=200)
 
     plt.close(fig)
     fig, axarr = plt.subplots(npol, sharex=True)
@@ -244,7 +244,7 @@ if save_plots:
     cbar_ax = fig.add_axes([0.85, 0.15, 0.04, 0.7])
     fig.colorbar(im, cax=cbar_ax, label='Gain (Jy units)')
     outfile = outdir + 'all_gains.png'
-    plt.savefig(outfile, dpi=300)
+    plt.savefig(outfile, dpi=200)
 
     # Receiver temp
     plt.close(fig)
@@ -261,4 +261,4 @@ if save_plots:
     cbar_ax = fig.add_axes([0.85, 0.15, 0.04, 0.7])
     fig.colorbar(im, cax=cbar_ax, label='Receiver Temp (K)')
     outfile = outdir + 'all_rxr_temps.png'
-    plt.savefig(outfile, dpi=300)
+    plt.savefig(outfile, dpi=200)
