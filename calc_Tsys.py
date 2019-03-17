@@ -278,15 +278,11 @@ class auto_data():
                 self.fits[(ant, pol)] = (sol['g'], sol['n'])
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
-    def save_data(selffile_name = None )
-        # Save data
-        if save_file is not None:
-            np.savez(file_name, fits = self.fits,
-                                gains = self.gains,
-                                Trxr = self.Trxr)
+    def save_fits(self, file_name):
+        np.savez(file_name, fits = self.fits,
+                            gains = self.gains,
+                            Trxr = self.Trxr)
 
-        elif save_file is None:
-            print 'No save file given'
 
     def plot_data(self, ant, pol):
         pass
