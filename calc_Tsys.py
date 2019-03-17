@@ -239,7 +239,7 @@ class auto_data():
             self.gains[(ant, pol)] = np.sqrt(Ae[poli] / 2761.3006 * self.fits[(ant, pol)][0])
             self.Trxr[(ant, pol)] = self.fits[(ant, pol)][1] / self.fits[(ant, pol)][0] - self.Tsky_mean[poli]
 
-    def fit_data(self, all_chans=True, ch=600, save_npz = False, file_name = None):
+    def fit_data(self, all_chans=True, ch=600):
         """
         Fit gains and receiver temperatures based on LST evolution of signal fit to
         simulated Tsky.
@@ -278,13 +278,14 @@ class auto_data():
                 self.fits[(ant, pol)] = (sol['g'], sol['n'])
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
+    def save_data(selffile_name = None )
         # Save data
-        if save_npz and save_file is not None:
+        if save_file is not None:
             np.savez(file_name, fits = self.fits,
                                 gains = self.gains,
                                 Trxr = self.Trxr)
 
-        elif save_npz and save_file is None:
+        elif save_file is None:
             print 'No save file given'
 
     def plot_data(self, ant, pol):
