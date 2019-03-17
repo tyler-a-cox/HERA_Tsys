@@ -275,6 +275,7 @@ class auto_data():
                         kwargs['Tsky%d' % i] = self.Tsky[poli, i, ch] - self.Tsky_mean[poli]
                 ls = linsolve.LinearSolver(d_ls, w_ls, **kwargs)
                 sol = ls.solve()
+                print sol['g']
                 self.fits[(ant, pol)] = (sol['g'], sol['n'])
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
