@@ -18,7 +18,7 @@ auto_fits = auto_data(data_dir=data_dir, filestart='zen.*',
                       f_min=50.,f_max=250.)
 auto_fits.build_model(Tsky_sim)
 
-
+auto_fits.fit_data()
 '''
 
 Plot of the receiver temperature vs. frequency

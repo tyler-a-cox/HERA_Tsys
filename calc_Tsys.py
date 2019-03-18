@@ -12,6 +12,7 @@ from hera_qm import xrfi
 from hera_qm import UVFlag
 from pyuvdata import UVData
 from matplotlib.colors import SymLogNorm
+from scipy.optimize import curve_fit
 
 class TskySim():
     """ Class to run Tsky Simulations"""
@@ -250,6 +251,10 @@ class auto_data():
             ch:        (int) Only fit this channel number. Default 600.
                        Ignored if all_chans == True.
         """
+
+        def curve_to_fit(Tsky_prime, g, n):
+            return g * Tsky_prime + n
+
         self.gains = {}
         self.Trxr = {}
         self.fits = {}
@@ -263,6 +268,7 @@ class auto_data():
                 freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
                 freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
                 for i in range(self.lsts.size):
+                    '''
                     if all_chans:
                         # Solve for all channels at once
                         d_ls['Tsky%d*g+n' % i] = data[i, freq_low:(freq_high+1)]
@@ -273,6 +279,12 @@ class auto_data():
                         d_ls['Tsky%d*g+n' % i] = data[i, ch]
                         w_ls['Tsky%d*g+n' % i] = 1 - flags[i, ch]
                         kwargs['Tsky%d' % i] = self.Tsky[poli, i, ch] - self.Tsky_mean[poli]
+                        '''
+                    if all_chans:
+                        sol_g = []
+                        sol_n = []
+                        for freq in np.arange(freq_low,(freq_high+1)):
+                            pass
                 ls = linsolve.LinearSolver(d_ls, w_ls, **kwargs)
                 sol = ls.solve()
                 print sol['g']
