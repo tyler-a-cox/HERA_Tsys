@@ -241,7 +241,14 @@ class auto_data():
             self.Trxr[(ant, pol)] = self.fits[(ant, pol)][1] / self.fits[(ant, pol)][0] - self.Tsky_mean[poli]
 
     def _calc_Trxr_err(self):
-        pass
+        for ant, pol in self.fits.keys():
+            sig_g = self.fit_cov[pol][:,0,0]
+            sig_n = self.fit_cov[pol][:,1,1]
+            sig_gn = self.fit_cov[pol][:,0,1]
+            g = self.fits[(ant, pol)][0]
+            n = self.fits[(ant, pol)][1]
+            self.Trxr_err[(ant, pol)] = np.sqrt(sig_g * n**2 / g**4  + sig_n * 1.0 / n**2 -
+                                    2 * sig_gn * n / g**3)
 
     def fit_data(self, all_chans=True, ch=600, calc_fit_err=False):
         """
@@ -256,9 +263,6 @@ class auto_data():
             calc_fit_err:   (bool) Calculate the covariance matrix of the fitted
                             parameter. Default False.
         """
-
-        def curve_to_fit(Tsky_prime, g, n):
-            return g * Tsky_prime + n
 
         self.gains = {}
         self.Trxr = {}
@@ -293,19 +297,22 @@ class auto_data():
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
         if calc_fit_err and all_chans:
-            for poli in np.arange(len(self.pols)):
+            for poli, pol in enumerate(self.pols):
+                cov_mat = np.zeros(((freq_high+1)-freq_low,2,2))
                 for fi, freq in enumerate(np.arange(freq_low,(freq_high+1))):
                     Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
                     A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
-                    cov = np.linalg.inv(np.dot(A.T, A))
-                    self.fit_cov[(pol, freq)] = cov
+                    cov_mat[fi, :, :] = np.linalg.inv(np.dot(A.T, A))
+                self.fit_cov[pol] = cov_mat
+            self._calc_Trxr_err()
 
         elif calc_fit_err:
-            for poli in np.arange(len(self.pols)):
+            for poli, pol in enumerate(self.pols):
                 Tsky_prime = self.Tsky[poli, :, ch] - self.Tsky_mean[poli, ch]
                 A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
                 cov = np.linalg.inv(np.dot(A.T, A))
-                self.fit_cov[(pol, freq)] = cov
+                self.fit_cov[pol] = cov
+            self._calc_Trxr_err()
 
     def save_fits(self, file_name):
         np.savez(file_name, fits = self.fits, param_err = self.param_err,
