@@ -292,7 +292,7 @@ class auto_data():
 
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
-        if calc_err and all_chans:
+        if calc_fit_err and all_chans:
             for poli in np.arange(npol):
                 for fi, freq in enumerate(np.arange(freq_low,(freq_high+1))):
                     Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
@@ -300,7 +300,7 @@ class auto_data():
                     cov = np.linalg.inv(np.dot(A.T, A))
                     self.fit_cov[(pol, freq)] = ATA
 
-        elif calc_err:
+        elif calc_fit_err:
             for poli in np.arange(npol):
                 Tsky_prime = self.Tsky[poli, :, ch] - self.Tsky_mean[poli, ch]
                 A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
