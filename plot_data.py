@@ -100,21 +100,19 @@ for ant in auto_fits.ants:
 
     diff = d-mdl_plot
 
-    fig, axes = plt.subplots(nrows=1, ncols=3)
-
-    fig.set_figheight(8)
-    fig.set_figwidth(18)
-
     data = [d,mdl_plot,diff]
+
+
+    fig, axes = plt.subplots(nrows=1, ncols=3)
     
-    d_max = np.real(np.max(d))
-
-
+    fig.set_figheight(6)
+    fig.set_figwidth(22)
     for i, ax in enumerate(axes.flat):
         if i != 2:
-            im = ax.imshow(np.abs(data[i]), vmin=0, vmax=d_max, cmap='inferno')
+            im = ax.pcolormesh(np.abs(data[i]),cmap='inferno')
+        colorbar_plotter(fig,ax,im,'K')#,axtype='lin')              
+            
         else:
-            im = ax.imshow(np.abs(data[i]), norm = SymLogNorm(linthresh=1, vmin=0, vmax=1e7), cmap='inferno')
-        ax.set_title('{}'.format(titles[i]))
-    fig.colorbar(im, ax=axes.ravel().tolist())
+        im = ax.pcolormesh(np.abs(data[i]), norm = SymLogNorm(linthresh=1, vmin=0, vmax=1e7), cmap='inferno')
+        colorbar_plotter(fig,ax,im,'K')
     plt.savefig(fig_dir + 'data_model_diff_ant_{}.png'.format(ant))
