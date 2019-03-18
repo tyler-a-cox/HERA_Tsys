@@ -303,7 +303,9 @@ class auto_data():
                 for fi, freq in enumerate(np.arange(freq_low,(freq_high+1))):
                     Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
                     A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
-                    cov_mat[fi, :, :] = np.linalg.inv(np.dot(A.T, A))
+                    C = 1 - flags[:, freq]
+                    AC = np.dot(A.T, np.diag(1.0 / C**2))
+                    cov_mat[fi, :, :] = np.linalg.inv(np.dot(AC,A))
                 self.fit_cov[pol] = cov_mat
             self._calc_Trxr_err()
 
