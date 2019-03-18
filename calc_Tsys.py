@@ -267,8 +267,8 @@ class auto_data():
                 kwargs = {}
                 freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
                 freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
+                '''
                 for i in range(self.lsts.size):
-                    '''
                     if all_chans:
                         # Solve for all channels at once
                         d_ls['Tsky%d*g+n' % i] = data[i, freq_low:(freq_high+1)]
@@ -279,16 +279,21 @@ class auto_data():
                         d_ls['Tsky%d*g+n' % i] = data[i, ch]
                         w_ls['Tsky%d*g+n' % i] = 1 - flags[i, ch]
                         kwargs['Tsky%d' % i] = self.Tsky[poli, i, ch] - self.Tsky_mean[poli]
-                        '''
-                    if all_chans:
-                        sol_g = []
-                        sol_n = []
-                        for freq in np.arange(freq_low,(freq_high+1)):
-                            pass
-                ls = linsolve.LinearSolver(d_ls, w_ls, **kwargs)
-                sol = ls.solve()
-                print sol['g']
-                self.fits[(ant, pol)] = (sol['g'], sol['n'])
+                    '''
+                if all_chans:
+                    sol = np.zeros((freq_high+1-freq_low, 2))
+                    cov = np.zeros((freq_high+1-freq_low, 2, 2))
+                    for fi, freq in enumerate(np.arange(freq_low,(freq_high+1))):
+                        Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
+                        out = curve_fit(curve_to_fit, Tsky_prime, data[:, freq],
+                                        bounds=(0, np.inf), absolute_sigma=True)
+                        sol[fi, :] = out[0]
+                        cov[fi, :, :] = out[1]
+                    self.fits[(ant, pol)] = (sol[:, 0], sol[:, 1])
+                    self.param_err[(ant, pol)] =
+                else:
+                    curve_fit(curve_to_fit, data)
+                
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
     def save_fits(self, file_name):
