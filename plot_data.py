@@ -1,6 +1,6 @@
 from calc_Tsys import TskySim, auto_data
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 
 hera_beam_file = '/home/shane/data/uv_beam_vivaldi.fits'
