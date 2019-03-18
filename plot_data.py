@@ -36,7 +36,7 @@ plt.legend(loc = 'best', framealpha = 1)
 x_ticks = np.linspace(0,1509,num=10,dtype=int)
 plt.xticks(x_ticks,(np.around(auto_fits.uv.freq_array[0,x_ticks]*1e-6)).astype(int))
 
-plt.title('Receiver Temperature as a Function of Antenna/Frequency (XX Pol) Data: 2458536',size=14,verticalalignment='bottom')
+plt.title('Receiver Temperature as a Function of Antenna/Frequency (XX Pol) Data: {}'.format(data_dir[-8:-1]),size=14,verticalalignment='bottom')
 plt.xlabel('Frequency (MHz)',size=14)
 plt.ylabel('Temperature (K)',size=14)
 plt.savefig(fig_dir + 'rxr_temp.png')
@@ -55,10 +55,10 @@ fig.set_figheight(6)
 fig.set_figwidth(14)
 
 color = 'tab:red'
-ax1.set_title('Spectrum of Noise and Gain Fitted Parameters (Antenna 0, XX Pol) Data: 2458536',size=14)
+ax1.set_title('Spectrum of Noise and Gain Fitted Parameters (Antenna 0, XX Pol) Data: {}'.format(data_dir[-8:-1]),size=14)
 ax1.set_ylabel('Noise Parameter',size=14,color=color)
 ax1.set_xlabel('Frequency (MHz)',size = 14)
-ax1.plot(auto_fits.Trxr[(0,'E')]*auto_fits.gains[(0,'E')],label='antenna 0',color = color)
+ax1.plot((auto_fits.Trxr[(0,'E')]+auto_fits.Tsky_mean[0])*auto_fits.gains[(0,'E')],label='antenna 0',color = color)
 ax1.tick_params(axis='y')
 ax1.set_yscale('symlog')
 
@@ -106,11 +106,13 @@ for ant in auto_fits.ants:
     fig.set_figwidth(18)
 
     data = [d,mdl_plot,diff]
+    
+    d_max = np.real(np.max(d))
 
 
     for i, ax in enumerate(axes.flat):
         if i != 2:
-            im = ax.imshow(np.abs(data[i]), vmin=0, vmax=4e7, cmap='inferno')
+            im = ax.imshow(np.abs(data[i]), vmin=0, vmax=d_max, cmap='inferno')
         else:
             im = ax.imshow(np.abs(data[i]), norm = SymLogNorm(linthresh=1, vmin=0, vmax=1e7), cmap='inferno')
         ax.set_title('{}'.format(titles[i]))
