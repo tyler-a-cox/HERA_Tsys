@@ -106,7 +106,6 @@ for ant in auto_fits.ants:
 
     data = [d,mdl_plot,diff]
 
-    print mdl_plot.shape
 
     for i, ax in enumerate(axes.flat):
         if i != 2:
