@@ -3,6 +3,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import SymLogNorm
 
+def colorbar_plotter(fig,ax,im,label):
+    
+    pos = ax.get_position()
+    cbarax = fig.add_axes([pos.x0 + pos.width+0.003, pos.y0, 0.005, pos.height])
+    cbar = fig.colorbar(im,cax=cbarax)
+    cbar.ax.tick_params(labelsize=8) 
+    cbar.ax.set_ylabel(label, labelpad=6)
+    
+    return cbar
+
 
 hera_beam_file = '/home/shane/data/uv_beam_vivaldi.fits'
 Tsky_file = '/data4/shane/data/HERA_Tsky_vivaldi.npz'
@@ -92,13 +102,14 @@ titles = ['Observed Dates (Linear Scale)',
 
 for ant in auto_fits.ants:
     plt.clf()
-    d = np.ma.masked_where(auto_fits.uv.get_flags((ant, ant, auto_fits.rev_pol_map[pol])),
-                           auto_fits.uv.get_data((ant, ant, auto_fits.rev_pol_map[pol])))
+    d = auto_fits.data2Tsky((ant, pol))
 
-    mdl_plot = ((auto_fits.Tsky[poli, :, :] - auto_fits.Tsky_mean[poli][:]) *
-                auto_fits.fits[(ant, pol)][0][:] + auto_fits.fits[(ant, pol)][1][:])
+    mdl_plot = auto_fits.Tsky[poli, :, :]
 
-    diff = d-mdl_plot
+    d = np.abs(d)
+    mdl_plot = np.abs(mdl_plot)
+
+    diff = (d-mdl_plot)
 
     data = [d,mdl_plot,diff]
 
@@ -109,10 +120,11 @@ for ant in auto_fits.ants:
     fig.set_figwidth(22)
     for i, ax in enumerate(axes.flat):
         if i != 2:
-            im = ax.pcolormesh(np.abs(data[i]),cmap='inferno')
-        colorbar_plotter(fig,ax,im,'K')#,axtype='lin')              
+            im = ax.pcolormesh(data[i], norm=SymLogNorm(linthresh=1,vmin=0,vmax=3000),cmap='inferno')
+            colorbar_plotter(fig,ax,im,'K')
             
         else:
-        im = ax.pcolormesh(np.abs(data[i]), norm = SymLogNorm(linthresh=1, vmin=0, vmax=1e7), cmap='inferno')
-        colorbar_plotter(fig,ax,im,'K')
+            im = ax.pcolormesh(data[i], norm=SymLogNorm(linthresh=1,vmin=0,vmax=3000),cmap='inferno')
+            colorbar_plotter(fig,ax,im,'K')
+            
     plt.savefig(fig_dir + 'data_model_diff_ant_{}.png'.format(ant))
