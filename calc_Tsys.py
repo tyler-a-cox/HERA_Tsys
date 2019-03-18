@@ -261,6 +261,7 @@ class auto_data():
         self.param_err = {}
         for poli, pol in enumerate(self.pols):
             for ant in self.ants:
+                print 'ANT: {}'.format(ant)
                 data = np.abs(self.uv.get_data((ant, ant, self.rev_pol_map[pol])))
                 flags = self.uv.get_flags((ant, ant, self.rev_pol_map[pol]))
                 d_ls = {}
