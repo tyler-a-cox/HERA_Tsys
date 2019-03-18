@@ -241,6 +241,7 @@ class auto_data():
             self.Trxr[(ant, pol)] = self.fits[(ant, pol)][1] / self.fits[(ant, pol)][0] - self.Tsky_mean[poli]
 
     def _calc_Trxr_err(self):
+        self.Trxr_err = {}
         for ant, pol in self.fits.keys():
             sig_g = self.fit_cov[pol][:,0,0]
             sig_n = self.fit_cov[pol][:,1,1]
@@ -248,7 +249,7 @@ class auto_data():
             g = self.fits[(ant, pol)][0]
             n = self.fits[(ant, pol)][1]
             self.Trxr_err[(ant, pol)] = np.sqrt(sig_g * n**2 / g**4  + sig_n * 1.0 / n**2 -
-                                    2 * sig_gn * n / g**3)
+                                                2 * sig_gn * n / g**3)
 
     def fit_data(self, all_chans=True, ch=600, calc_fit_err=False):
         """
