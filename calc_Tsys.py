@@ -298,7 +298,7 @@ class auto_data():
                     Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
                     A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
                     cov = np.linalg.inv(np.dot(A.T, A))
-                    self.fit_cov[(pol, freq)] = ATA
+                    self.fit_cov[(pol, freq)] = cov
 
         elif calc_fit_err:
             for poli in np.arange(len(self.pols)):
