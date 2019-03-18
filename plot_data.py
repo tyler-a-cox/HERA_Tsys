@@ -120,11 +120,11 @@ for ant in auto_fits.ants:
     fig.set_figwidth(22)
     for i, ax in enumerate(axes.flat):
         if i != 2:
-            im = ax.pcolormesh(data[i], norm=SymLogNorm(linthresh=1,vmin=0,vmax=3000),cmap='inferno')
+            im = ax.pcolormesh(data[i], norm=SymLogNorm(linthresh=1,vmin=10,vmax=10000),cmap='inferno')
             colorbar_plotter(fig,ax,im,'K')
             
         else:
-            im = ax.pcolormesh(data[i], norm=SymLogNorm(linthresh=1,vmin=0,vmax=3000),cmap='inferno')
+            im = ax.pcolormesh(data[i],vmin=-.75,vmax=0.75, cmap='bwr')
             colorbar_plotter(fig,ax,im,'K')
             
     plt.savefig(fig_dir + 'data_model_diff_ant_{}.png'.format(ant))
