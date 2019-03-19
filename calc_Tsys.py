@@ -311,10 +311,11 @@ class auto_data():
 
         elif calc_fit_err:
             for poli, pol in enumerate(self.pols):
-                Tsky_prime = self.Tsky[poli, :, ch] - self.Tsky_mean[poli, ch]
+                Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
                 A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
-                cov = np.linalg.inv(np.dot(A.T, A))
-                self.fit_cov[pol] = cov
+                C = 1 - flags[:, freq]
+                AC = np.dot(A.T, np.diag(1.0 / C**2))
+                self.fit_cov[pol] = np.linalg.inv(np.dot(AC,A))
             self._calc_Trxr_err()
 
     def save_fits(self, file_name):

@@ -3,8 +3,8 @@ import capo
 import aipy
 from glob import glob
 
-nant = 128
-chanave = 16
+nant = 512
+chanave = 4
 
 xxglob = '/data6/HERA/H1C_IDR2_1/2458116/*xx.HH.uv'
 yyglob = '/data6/HERA/H1C_IDR2_1/2458116/*yy.HH.uv'
