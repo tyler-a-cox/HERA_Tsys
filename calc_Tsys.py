@@ -12,7 +12,6 @@ from hera_qm import xrfi
 from hera_qm import UVFlag
 from pyuvdata import UVData
 from matplotlib.colors import SymLogNorm
-from scipy.optimize import curve_fit
 
 class TskySim():
     """ Class to run Tsky Simulations"""
@@ -271,7 +270,6 @@ class auto_data():
         self.fit_cov = {}
         for poli, pol in enumerate(self.pols):
             for ant in self.ants:
-                print 'ANT: {}'.format(ant)
                 data = np.abs(self.uv.get_data((ant, ant, self.rev_pol_map[pol])))
                 flags = self.uv.get_flags((ant, ant, self.rev_pol_map[pol]))
                 d_ls = {}
@@ -322,10 +320,6 @@ class auto_data():
         np.savez(file_name, fits = self.fits, param_err = self.param_err,
                             gains = self.gains, Trxr = self.Trxr,
                             Trxr_err = self.Trxr_err)
-
-
-    def plot_data(self, ant, pol):
-        pass
 
     def data2Tsky(self, key):
         poli = np.where(self.pols == key[1])[0]
