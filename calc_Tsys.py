@@ -174,8 +174,8 @@ class auto_data():
             self.lsts = data_file['lsts']
             self.freqs = data_file['freqs']
             self.ants = data_file['ants']
-
-            self.wrap = np.argmax(self.lsts)]
+            self.data = data_file['data_ave']
+            self.wrap = np.argmax(self.lsts)
         else:
             self.read_data(f_min,f_max)
             self.update_freq_array(f_min,f_max)
@@ -292,8 +292,9 @@ class auto_data():
                 kwargs = {}
                 #freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
                 #freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
-                freq_low = np.min(self.freqs)
-                freq_high = np.max(self.freqs)
+                freq_low = np.where(self.freqs == np.min(self.freqs))[0]
+                freq_high = np.where(self.freqs == np.max(self.freqs))[0]
+                flags = np.zeros_like(data)
 
                 for i in range(self.lsts.size):
                     if all_chans:
