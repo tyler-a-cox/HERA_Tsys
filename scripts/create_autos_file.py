@@ -3,8 +3,8 @@ import capo
 import aipy
 from glob import glob
 
-nant = 512
-chanave = 4
+nant = 128
+chanave = 16
 
 xxglob = '/data6/HERA/H1C_IDR2_1/2458116/*xx.HH.uv'
 yyglob = '/data6/HERA/H1C_IDR2_1/2458116/*yy.HH.uv'
@@ -15,8 +15,8 @@ yyfilenames = glob(yyglob)
 xxt, xxd, xxf = capo.arp.get_dict_of_uv_data(xxfilenames, polstr='xx', antstr='auto')
 yyt, yyd, yyf = capo.arp.get_dict_of_uv_data(yyfilenames, polstr='yy', antstr='auto')
 
-print np.array(xxd.keys())[0,:]
-
+print np.array(xxd.keys())[:,0]
+'''
 ant_max = int(np.array(xxd.keys())[:,0].max())
 nant = int(np.array(xxd.keys())[:,0].shape[0])
 
@@ -53,3 +53,4 @@ data_ave = [xxd_ave, yyd_ave]
 
 autos_file = '/data4/tcox/HERA_IDR2_analysis/IDR2_2458116_autos_512_chan.npz'
 np.savez(autos_file, data_ave=data_ave, lsts=lsts)
+'''

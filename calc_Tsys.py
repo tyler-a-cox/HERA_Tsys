@@ -157,7 +157,8 @@ class TskySim():
 class auto_data():
     """ Class to hold auto correlation data """
     def __init__(self, data_dir='/data6/HERA/data/2458042/KM_uvR_files/', filestart='zen.*',
-                 dpols=['xx', 'yy'], fileend='*.uvR', autos_file='IDR1_autos.uvR',f_min = 100.0, f_max = 200.0):
+                 dpols=['xx', 'yy'], fileend='*.uvR', autos_file='IDR1_autos.uvR',
+                 use_npz = False, npz_file = None, f_min = 100.0, f_max = 200.0):
         self.data_dir = data_dir
         self.autos_file = autos_file
         self.dpols = dpols
@@ -167,8 +168,17 @@ class auto_data():
         # Read in data
         self.filestart = filestart
         self.fileend = fileend
-        self.read_data(f_min,f_max)
-        self.update_freq_array(f_min,f_max)
+
+        if use_npz:
+            data_file = np.load(npz_file)
+            self.lsts = data_file['lsts']
+            self.freqs = data_file['freqs']
+            self.ants = data_file['ants']
+
+            self.wrap = np.argmax(self.lsts)]
+        else:
+            self.read_data(f_min,f_max)
+            self.update_freq_array(f_min,f_max)
 
     def read_data(self, f_min, f_max, force_read=False):
         self.uv = pyuvdata.UVData()
@@ -200,6 +210,9 @@ class auto_data():
         self.wrap = np.argmax(self.lsts)
         self.freqs = self.uv.freq_array.flatten() * 1e-6
         self.ants = self.uv.get_ants()
+
+    def average_channels(self):
+        pass
 
     def update_freq_array(self,f_min,f_max):
         '''
@@ -270,13 +283,17 @@ class auto_data():
         self.fit_cov = {}
         for poli, pol in enumerate(self.pols):
             for ant in self.ants:
-                data = np.abs(self.uv.get_data((ant, ant, self.rev_pol_map[pol])))
-                flags = self.uv.get_flags((ant, ant, self.rev_pol_map[pol]))
+                #data = np.abs(self.uv.get_data((ant, ant, self.rev_pol_map[pol])))
+                #flags = self.uv.get_flags((ant, ant, self.rev_pol_map[pol]))
+                data = self.data[poli, ant, :, :]
+
                 d_ls = {}
                 w_ls = {}
                 kwargs = {}
-                freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
-                freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
+                #freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
+                #freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
+                freq_low = np.min(self.freqs)
+                freq_high = np.max(self.freqs)
 
                 for i in range(self.lsts.size):
                     if all_chans:
