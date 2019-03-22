@@ -171,7 +171,7 @@ class auto_data():
 
         if use_npz:
             data_file = np.load(npz_file)
-            self.lsts = data_file['lsts']
+            self.lsts = data_file['lsts'][0]
             self.freqs = data_file['freqs']
             self.ants = data_file['ants']
             self.data = data_file['data_ave']
@@ -292,8 +292,8 @@ class auto_data():
                 kwargs = {}
                 #freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
                 #freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
-                freq_low = np.where(self.freqs == np.min(self.freqs))[0]
-                freq_high = np.where(self.freqs == np.max(self.freqs))[0]
+                freq_low = np.where(self.freqs == np.min(self.freqs))[0][0]
+                freq_high = np.where(self.freqs == np.max(self.freqs))[0][0]
                 flags = np.zeros_like(data)
 
                 for i in range(self.lsts.size):
