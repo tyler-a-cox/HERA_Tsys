@@ -54,6 +54,6 @@ yyd_ave = yyd_ave[:, inds, :]
 lsts = [xlsts, ylsts]
 data_ave = [xxd_ave, yyd_ave]
 
-autos_file = '/data4/tcox/HERA_IDR2_analysis/IDR2_2458116_autos.npz'
+autos_file = '/data4/tcox/HERA_IDR2_analysis/IDR2_2458116_autos_64_chan.npz'
 np.savez(autos_file, data_ave=data_ave, lsts=lsts, ants = ants_xx, freqs = freqs)
 
