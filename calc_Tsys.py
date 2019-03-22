@@ -158,7 +158,7 @@ class auto_data():
     """ Class to hold auto correlation data """
     def __init__(self, data_dir='/data6/HERA/data/2458042/KM_uvR_files/', filestart='zen.*',
                  dpols=['xx', 'yy'], fileend='*.uvR', autos_file='IDR1_autos.uvR',
-                 use_npz = False, npz_file = None, f_min = 100.0, f_max = 200.0):
+                 npz_file = None, f_min = 100.0, f_max = 200.0):
         self.data_dir = data_dir
         self.autos_file = autos_file
         self.dpols = dpols
@@ -169,7 +169,12 @@ class auto_data():
         self.filestart = filestart
         self.fileend = fileend
 
-        if use_npz:
+        if npz_file is None:
+            self.use_npz = False
+        else:
+            self.use_npz = True
+
+        if self.use_npz:
             data_file = np.load(npz_file)
             self.lsts = data_file['lsts'][0]
             self.freqs = data_file['freqs']
@@ -283,18 +288,24 @@ class auto_data():
         self.fit_cov = {}
         for poli, pol in enumerate(self.pols):
             for ant in self.ants:
-                #data = np.abs(self.uv.get_data((ant, ant, self.rev_pol_map[pol])))
-                #flags = self.uv.get_flags((ant, ant, self.rev_pol_map[pol]))
-                data = self.data[poli, ant, :, :]
 
                 d_ls = {}
                 w_ls = {}
                 kwargs = {}
-                #freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
-                #freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
-                freq_low = np.where(self.freqs == np.min(self.freqs))[0][0]
-                freq_high = np.where(self.freqs == np.max(self.freqs))[0][0]
-                flags = np.zeros_like(data)
+
+                if self.use_npz:
+                    data = self.data[poli, ant, :, :]
+                    flags = np.zeros_like(data)
+                    freq_low = np.where(self.freqs == np.min(self.freqs))[0][0]
+                    freq_high = np.where(self.freqs == np.max(self.freqs))[0][0]
+
+                else:
+                    data = np.abs(self.uv.get_data((ant, ant, self.rev_pol_map[pol])))
+                    flags = self.uv.get_flags((ant, ant, self.rev_pol_map[pol]))
+                    freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
+                    freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
+
+
 
                 for i in range(self.lsts.size):
                     if all_chans:
