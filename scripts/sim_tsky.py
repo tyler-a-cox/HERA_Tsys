@@ -35,7 +35,7 @@ sky_array = np.load(gsm_file)['sky']
 
 def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
               Tsky_file = None, add_noise = False, sigma = None,
-              narrow = False, narrow_frac = None, widen = False
+              narrow = False, narrow_frac = None, widen = False,
               widen_frac = None):
 
     lsts = np.zeros_like(hours)
@@ -95,8 +95,8 @@ def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
     if save_sky:
         np.savez(Tsky_file, HERA_Tsky=HERA_Tsky, freqs=freqs, lsts=lsts)
 
-widen_frac = [0.1, 0.15, 0.2, 0.25]
+narrow_frac = [0.1, 0.15, 0.2, 0.25]
 
-for frac in widen_frac:
-        HERA_Tsky(pols, freqs, widen=True, widen_frac = frac, save_sky=True
-                  Tsky_file = '/data4/tcox/sky_models/HERA_Tsky_wide_{}_percent.npz'.format(int(frac*100)))
+for frac in narrow_frac:
+        HERA_Tsky(pols, freqs, narrow=True, narrow_frac = frac, save_sky=True,
+                  Tsky_file = '/data4/tcox/sky_models/HERA_Tsky_narrow_{}_percent.npz'.format(int(frac*100)))
