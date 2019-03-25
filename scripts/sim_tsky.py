@@ -95,6 +95,8 @@ def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
     if save_sky:
         np.savez(Tsky_file, HERA_Tsky=HERA_Tsky, freqs=freqs, lsts=lsts)
 
-for deg in np.arange(1,10):
-        HERA_Tsky(pols, freqs, smoothing = True, deg = deg, save_sky=True
-                  Tsky_file = '/data4/tcox/sky_models/HERA_Tsky_{}_deg_conv.npz'.format(deg))
+widen_frac = [0.1, 0.15, 0.2, 0.25]
+
+for frac in widen_frac:
+        HERA_Tsky(pols, freqs, widen=True, widen_frac = frac, save_sky=True
+                  Tsky_file = '/data4/tcox/sky_models/HERA_Tsky_wide_{}_percent.npz'.format(int(frac*100)))
