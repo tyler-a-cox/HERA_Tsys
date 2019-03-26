@@ -34,28 +34,60 @@ gsm_file = '/data4/tcox/HERA_IDR2_analysis/gsm.npz'
 sky_array = np.load(gsm_file)['sky']
 
 def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
-              Tsky_file = None, smoothing = False, deg = 1):
+              Tsky_file = None, add_noise = False, sigma = None,
+              narrow = False, narrow_frac = None, widen = False,
+              widen_frac = None):
+
     lsts = np.zeros_like(hours)
     HERA_Tsky = np.zeros((len(pols), freqs.shape[0], lsts.shape[0]))
+
     for poli, pol in enumerate(pols):
+
         pol_ang = 90 * (1-poli)  # Extra rotation for X
         proj_beam = hp.projector.OrthographicProj(rot=[pol_ang,90], half_sky=True, xsize=400)
         for fi, freq in enumerate(freqs):
-            if smoothing:
+
+            beam = np.copy(hera_beam[pol][:, fi])
+
+            if add_noise:
+                deg = 1
                 deg_to_rad = np.pi / 180.0
                 sig_to_fwhm = 2.4
-                beam = hp.sphtfunc.smoothing(hera_beam[pol][:, fi],
-                                             fwhm=deg_to_rad*sig_to_fwhm*deg)
-            else:
-                beam = hera_beam[pol][:, fi]
+                noise = beam * np.random.normal(scale=sigma, size=beam.shape[0])
+                beam += hp.sphtfunc.smoothing(noise,fwhm=deg_to_rad*sig_to_fwhm*deg,
+                                                               verbose=False)
+
+            if narrow:
+                theta_arr, phi_arr = hp.pix2ang(nside, np.arange(beam.shape[0]))
+                h_max, _ = hp.pix2ang(nside, np.argmin(np.abs(beam -
+                                                       beam.max() / 2.0)))
+                shift = h_max*(1+narrow_frac)-h_max
+                beam = hp.get_interp_val(beam, theta_arr+shift,  phi_arr+shift/2.0)
+                beam *= hera_beam[pol][:, fi].max() / beam.max()
+
+            if widen:
+                theta_arr, phi_arr = hp.pix2ang(nside, np.arange(beam.shape[0]))
+
+                h_max, _ = hp.pix2ang(nside, np.argmin(np.abs(beam -
+                                                       beam.max() / 2.0)))
+                s = h_max*(1 + widen_frac)-h_max
+                t = theta_arr - s
+                p = phi_arr - s
+                t[t < 0] = 0
+                p[p < 0] = 0
+                beam = hp.get_interp_val(beam, t, p)
+
+
             print 'Forming HERA Tsky for frequency ' + str(freq) + ' MHz.'
             hbeam = proj_beam.projmap(beam, f)
             hbeam[np.isinf(hbeam)] = np.nan
+
             for ti, t in enumerate(hours):
                 dt = datetime(2013, 1, 1, np.int(t), np.int(60.0 * (t - np.floor(t))),
                               np.int(60.0 * (60.0 * t - np.floor(t * 60.0))))
                 lsts[ti] = Time(dt).sidereal_time('apparent', longitude).hour
                 HERA_Tsky[poli, fi, ti] = np.nanmean(hbeam * sky_array[fi, ti, :, :]) / np.nanmean(hbeam)
+
     inds = np.argsort(lsts)
     lsts = lsts[inds]
     HERA_Tsky = HERA_Tsky[:, :, inds]
@@ -63,6 +95,8 @@ def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
     if save_sky:
         np.savez(Tsky_file, HERA_Tsky=HERA_Tsky, freqs=freqs, lsts=lsts)
 
-for deg in np.arange(1,10):
-        HERA_Tsky(pols, freqs, smoothing = True, deg = deg, save_sky=True
-                  Tsky_file = '/data4/tcox/sky_models/HERA_Tsky_{}_deg_conv.npz'.format(deg))
+narrow_frac = [0.1, 0.15, 0.2, 0.25]
+
+for frac in narrow_frac:
+        HERA_Tsky(pols, freqs, narrow=True, narrow_frac = frac, save_sky=True,
+                  Tsky_file = '/data4/tcox/sky_models/HERA_Tsky_narrow_{}_percent.npz'.format(int(frac*100)))

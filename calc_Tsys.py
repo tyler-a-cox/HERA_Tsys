@@ -157,7 +157,8 @@ class TskySim():
 class auto_data():
     """ Class to hold auto correlation data """
     def __init__(self, data_dir='/data6/HERA/data/2458042/KM_uvR_files/', filestart='zen.*',
-                 dpols=['xx', 'yy'], fileend='*.uvR', autos_file='IDR1_autos.uvR',f_min = 100.0, f_max = 200.0):
+                 dpols=['xx', 'yy'], fileend='*.uvR', autos_file='IDR1_autos.uvR',
+                 npz_file = None, f_min = 100.0, f_max = 200.0):
         self.data_dir = data_dir
         self.autos_file = autos_file
         self.dpols = dpols
@@ -167,8 +168,22 @@ class auto_data():
         # Read in data
         self.filestart = filestart
         self.fileend = fileend
-        self.read_data(f_min,f_max)
-        self.update_freq_array(f_min,f_max)
+
+        if npz_file is None:
+            self.use_npz = False
+        else:
+            self.use_npz = True
+
+        if self.use_npz:
+            data_file = np.load(npz_file)
+            self.lsts = data_file['lsts'][0]
+            self.freqs = data_file['freqs']
+            self.ants = data_file['ants']
+            self.data = data_file['data_ave']
+            self.wrap = np.argmax(self.lsts)
+        else:
+            self.read_data(f_min,f_max)
+            self.update_freq_array(f_min,f_max)
 
     def read_data(self, f_min, f_max, force_read=False):
         self.uv = pyuvdata.UVData()
@@ -200,6 +215,9 @@ class auto_data():
         self.wrap = np.argmax(self.lsts)
         self.freqs = self.uv.freq_array.flatten() * 1e-6
         self.ants = self.uv.get_ants()
+
+    def average_channels(self):
+        pass
 
     def update_freq_array(self,f_min,f_max):
         '''
@@ -239,29 +257,56 @@ class auto_data():
             self.gains[(ant, pol)] = np.sqrt(Ae[poli] / 2761.3006 * self.fits[(ant, pol)][0])
             self.Trxr[(ant, pol)] = self.fits[(ant, pol)][1] / self.fits[(ant, pol)][0] - self.Tsky_mean[poli]
 
-    def fit_data(self, all_chans=True, ch=600):
+    def _calc_Trxr_err(self):
+        self.Trxr_err = {}
+        for ant, pol in self.fits.keys():
+            sig_g = self.fit_cov[pol][:,0,0]
+            sig_n = self.fit_cov[pol][:,1,1]
+            sig_gn = self.fit_cov[pol][:,0,1]
+            g = self.fits[(ant, pol)][0]
+            n = self.fits[(ant, pol)][1]
+            self.Trxr_err[(ant, pol)] = np.sqrt(sig_g * n**2 / g**4  + sig_n * 1.0 / n**2 -
+                                                2 * sig_gn * n / g**3)
+
+    def fit_data(self, all_chans=True, ch=600, calc_fit_err=False):
         """
         Fit gains and receiver temperatures based on LST evolution of signal fit to
         simulated Tsky.
 
         Args:
-            all_chans: (bool) fit all channels if set to True (default, slow).
-                       Otherwise only fit channel ch (faster).
-            ch:        (int) Only fit this channel number. Default 600.
-                       Ignored if all_chans == True.
+            all_chans:      (bool) fit all channels if set to True (default, slow).
+                            Otherwise only fit channel ch (faster).
+            ch:             (int) Only fit this channel number. Default 600.
+                            Ignored if all_chans == True.
+            calc_fit_err:   (bool) Calculate the covariance matrix of the fitted
+                            parameter. Default False.
         """
+
         self.gains = {}
         self.Trxr = {}
         self.fits = {}
+        self.fit_cov = {}
         for poli, pol in enumerate(self.pols):
             for ant in self.ants:
-                data = np.abs(self.uv.get_data((ant, ant, self.rev_pol_map[pol])))
-                flags = self.uv.get_flags((ant, ant, self.rev_pol_map[pol]))
+
                 d_ls = {}
                 w_ls = {}
                 kwargs = {}
-                freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
-                freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
+
+                if self.use_npz:
+                    data = self.data[poli, ant, :, :]
+                    flags = np.zeros_like(data)
+                    freq_low = np.where(self.freqs == np.min(self.freqs))[0][0]
+                    freq_high = np.where(self.freqs == np.max(self.freqs))[0][0]
+
+                else:
+                    data = np.abs(self.uv.get_data((ant, ant, self.rev_pol_map[pol])))
+                    flags = self.uv.get_flags((ant, ant, self.rev_pol_map[pol]))
+                    freq_low = np.where(self.uv.freq_array*1e-6 == np.min(self.freqs))[1][0]
+                    freq_high = np.where(self.uv.freq_array*1e-6 == np.max(self.freqs))[1][0]
+
+
+
                 for i in range(self.lsts.size):
                     if all_chans:
                         # Solve for all channels at once
@@ -276,16 +321,34 @@ class auto_data():
                 ls = linsolve.LinearSolver(d_ls, w_ls, **kwargs)
                 sol = ls.solve()
                 self.fits[(ant, pol)] = (sol['g'], sol['n'])
+
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
+        if calc_fit_err and all_chans:
+            for poli, pol in enumerate(self.pols):
+                cov_mat = np.zeros(((freq_high+1)-freq_low,2,2))
+                for fi, freq in enumerate(np.arange(freq_low,(freq_high+1))):
+                    Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
+                    A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
+                    C = 1 - flags[:, freq]
+                    AC = np.dot(A.T, np.diag(1.0 / C**2))
+                    cov_mat[fi, :, :] = np.linalg.inv(np.dot(AC,A))
+                self.fit_cov[pol] = cov_mat
+            self._calc_Trxr_err()
+
+        elif calc_fit_err:
+            for poli, pol in enumerate(self.pols):
+                Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
+                A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
+                C = 1 - flags[:, freq]
+                AC = np.dot(A.T, np.diag(1.0 / C**2))
+                self.fit_cov[pol] = np.linalg.inv(np.dot(AC,A))
+            self._calc_Trxr_err()
+
     def save_fits(self, file_name):
-        np.savez(file_name, fits = self.fits,
-                            gains = self.gains,
-                            Trxr = self.Trxr)
-
-
-    def plot_data(self, ant, pol):
-        pass
+        np.savez(file_name, fits = self.fits, param_err = self.param_err,
+                            gains = self.gains, Trxr = self.Trxr,
+                            Trxr_err = self.Trxr_err)
 
     def data2Tsky(self, key):
         poli = np.where(self.pols == key[1])[0]
@@ -294,83 +357,3 @@ class auto_data():
         d = self.uv.get_data((key[0], key[0], self.rev_pol_map[key[1]]))[:,freq_low:(freq_high+1)]
         d = d / ((self.gains[key]**2. * 2761.3006 / self.Ae[poli]).reshape(1, -1)) - self.Trxr[key]
         return d
-
-if __name__ == '__main__':
-    hera_beam_file = '/home/shane/data/uv_beam_vivaldi.fits'
-    Tsky_sim = TskySim(Tsky_file = '/data4/shane/data/HERA_Tsky_vivaldi.npz', beam_file = hera_beam_file,
-                      f_min=50,f_max=250)
-    Tsky_sim.build_model()
-    auto_data = auto_data(data_dir='/data4/shane/data/2458536/', filestart='zen.*',
-                             fileend='*HH.uvh5', autos_file='post_power_drop_autos.uvh5',f_min=50.,f_max=250.)
-    auto_data.build_model(Tsky_sim)
-    '''
-    if save_plots:
-        # Rxr for one antenna
-        plt.figure(figsize = (16,6))
-        plt.plot(auto_data.Trxr[(0,'E')],label='antenna 0')
-        plt.ylim([0,3e6])
-        plt.yscale('symlog')
-
-        plt.legend(loc = 'best', framealpha = 1)
-
-        x_ticks = np.linspace(0,1509,num=10,dtype=int)
-        plt.xticks(x_ticks,(np.around(auto_data.uv.freq_array[0,x_ticks]*1e-6)).astype(int))
-
-        plt.title('Receiver Temperature as a Function of Antenna/Frequency (XX Pol) Data: 2458536',size=14,verticalalignment='bottom')
-        plt.xlabel('Frequency (MHz)',size=14)
-        plt.ylabel('Temperature (K)',size=14)
-        plt.savefig('', dpi = 200)
-
-        plt.clf()
-
-        # Gain and Noise
-        fig, ax1 = plt.subplots()
-
-        fig.set_figheight(6)
-        fig.set_figwidth(14)
-
-        color = 'tab:red'
-        ax1.set_title('Spectrum of Noise and Gain Fitted Parameters (Antenna 0, XX Pol) Data: 2458536',size=14)
-        ax1.set_ylabel('Noise Parameter',size=14,color=color)
-        ax1.set_xlabel('Frequency (MHz)',size = 14)
-        ax1.plot(auto_data.Trxr[(0,'E')]*auto_data.gains[(0,'E')],label='antenna 0',color = color)
-        ax1.tick_params(axis='y')
-        ax1.set_yscale('symlog')
-
-        x_ticks = np.linspace(0,1509,num=10,dtype=int)
-        ax1.set_xticks(x_ticks)
-        ax1.set_xticklabels((np.around(auto_data.uv.freq_array[0,x_ticks]*1e-6)).astype(int))
-
-        ax2 = ax1.twinx()
-
-        color = 'tab:blue'
-        ax2.set_ylabel('Gain Parameter',size = 14,color=color)
-        ax2.plot(auto_data.gains[(0,'E')],label='antenna 0',color = color)
-        ax2.tick_params(axis='y')
-        ax2.set_yscale('symlog')
-
-        fig.tight_layout()
-        plt.savefig('', dpi = 200)
-
-        plt.clf()
-
-        # Data & Model vs LST
-        plt.figure()
-        chosen_ant = 1
-        dark_colors = ['blue', 'green', 'red']
-        light_colors = ['dodgerblue', 'lightgreen', 'salmon']
-        poli = 0
-        pol = auto_data.pols[poli]
-        chans = [70,500,780] # channel size 820
-        d = np.ma.masked_where(auto_data.uv.get_flags((chosen_ant, chosen_ant, auto_data.rev_pol_map[pol])),
-                               auto_data.uv.get_data((chosen_ant, chosen_ant, auto_data.rev_pol_map[pol])))
-        plot_lsts = np.concatenate([auto_data.lsts[:(auto_data.wrap+1)]-24, auto_data.lsts[(auto_data.wrap+1):]])
-        for i, chan in enumerate(chans):
-            d_plot = d[:, chan]
-            plt.plot(plot_lsts, d_plot, '.', ms=1, color=dark_colors[i])
-            mdl_plot = ((auto_data.Tsky[poli, :, chan] - auto_data.Tsky_mean[poli][chan]) *
-                        auto_data.fits[(chosen_ant, pol)][0][chan] + auto_data.fits[(chosen_ant, pol)][1][chan])
-            plt.plot(plot_lsts, mdl_plot, linewidth=0.5, color=light_colors[i],label=str(int(auto_data.freqs[chan]))+' MHz')
-        plt.title('Raw data and fit')
-        plt.legend()
-        '''

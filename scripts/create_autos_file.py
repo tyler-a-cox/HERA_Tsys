@@ -15,7 +15,7 @@ yyfilenames = glob(yyglob)
 xxt, xxd, xxf = capo.arp.get_dict_of_uv_data(xxfilenames, polstr='xx', antstr='auto')
 yyt, yyd, yyf = capo.arp.get_dict_of_uv_data(yyfilenames, polstr='yy', antstr='auto')
 
-print np.array(xxd.keys())[0,:]
+ants_xx = np.array(xxd.keys())[:,0]
 
 ant_max = int(np.array(xxd.keys())[:,0].max())
 nant = int(np.array(xxd.keys())[:,0].shape[0])
@@ -31,11 +31,14 @@ xxd_ave = np.zeros((ant_max+1, xnt, nchan / chanave), dtype=np.float64)
 yyd_ave = np.zeros((ant_max+1, ynt, nchan / chanave), dtype=np.float64)
 
 
+df = 1.5626  # 100 MHz / 64 averaged channels
+freqs = np.arange(100.0 + df / 2.0, 200.0, df)
+
 for ant in xrange(ant_max+1):
     for chan in xrange(nchan / chanave):
         try:
-	        xxd_ave[ant, :, chan] = np.real(np.mean(xxd[ant, ant]['xx'][:, (chan * chanave):((chan + 1) * chanave)], axis=1))
-            yyd_ave[ant, :, chan] = np.real(np.mean(yyd[ant, ant]['yy'][:, (chan * chanave):((chan + 1) * chanave)], axis=1))
+		xxd_ave[ant, :, chan] = np.real(np.mean(xxd[ant, ant]['xx'][:, (chan * chanave):((chan + 1) * chanave)], axis=1))
+            	yyd_ave[ant, :, chan] = np.real(np.mean(yyd[ant, ant]['yy'][:, (chan * chanave):((chan + 1) * chanave)], axis=1))
 
         except KeyError:
 	           print 'Antenna pair not in data: ' + str(ant)
@@ -51,5 +54,6 @@ yyd_ave = yyd_ave[:, inds, :]
 lsts = [xlsts, ylsts]
 data_ave = [xxd_ave, yyd_ave]
 
-autos_file = '/data4/tcox/HERA_IDR2_analysis/IDR2_2458116_autos.npz'
-np.savez(autos_file, data_ave=data_ave, lsts=lsts)
+autos_file = '/data4/tcox/HERA_IDR2_analysis/IDR2_2458116_autos_64_chan.npz'
+np.savez(autos_file, data_ave=data_ave, lsts=lsts, ants = ants_xx, freqs = freqs)
+
