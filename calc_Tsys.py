@@ -260,9 +260,9 @@ class auto_data():
     def _calc_Trxr_err(self):
         self.Trxr_err = {}
         for ant, pol in self.fits.keys():
-            sig_g = self.fit_cov[pol][:,0,0]
-            sig_n = self.fit_cov[pol][:,1,1]
-            sig_gn = self.fit_cov[pol][:,0,1]
+            sig_g = self.fit_cov[(ant,pol)][:,0,0]
+            sig_n = self.fit_cov[(ant,pol)][:,1,1]
+            sig_gn = self.fit_cov[(ant,pol)][:,0,1]
             g = self.fits[(ant, pol)][0]
             n = self.fits[(ant, pol)][1]
             self.Trxr_err[(ant, pol)] = np.sqrt(sig_g * n**2 / g**4  + sig_n * 1.0 / n**2 -
@@ -326,23 +326,26 @@ class auto_data():
 
         if calc_fit_err and all_chans:
             for poli, pol in enumerate(self.pols):
-                cov_mat = np.zeros(((freq_high+1)-freq_low,2,2))
-                for fi, freq in enumerate(np.arange(freq_low,(freq_high+1))):
-                    Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
-                    A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
-                    C = 1 - flags[:, freq]
-                    AC = np.dot(A.T, np.diag(1.0 / C**2))
-                    cov_mat[fi, :, :] = np.linalg.inv(np.dot(AC,A))
-                self.fit_cov[pol] = cov_mat
+                for ant in self.ants:
+                    cov_mat = np.zeros(((freq_high+1)-freq_low, 2, 2))
+                    for fi, freq in enumerate(np.arange(freq_low,(freq_high+1))):
+                        Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
+                        A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
+                        Q_inv = np.linalg.inv(A.T, A)
+                        yhat = self.fits[(ant, pol)][0]*Tsky_prime+self.fits[(ant, pol)][1]
+                        rss = np.sum((data[:, ch] - yhat) ** 2)
+                    self.fit_cov[(ant,pol)] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
             self._calc_Trxr_err()
 
         elif calc_fit_err:
             for poli, pol in enumerate(self.pols):
-                Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
-                A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
-                C = 1 - flags[:, freq]
-                AC = np.dot(A.T, np.diag(1.0 / C**2))
-                self.fit_cov[pol] = np.linalg.inv(np.dot(AC,A))
+                for ant in self.ants:
+                    Tsky_prime = self.Tsky[poli, :, ch] - self.Tsky_mean[poli, ch]
+                    A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
+                    Q_inv = np.linalg.inv(A.T, A)
+                    yhat = self.fits[(ant, pol)][0]*Tsky_prime+self.fits[(ant, pol)][1]
+                    rss = np.sum((data[:, ch] - yhat) ** 2)
+                    self.fit_cov[(ant,pol)] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
             self._calc_Trxr_err()
 
     def save_fits(self, file_name):
