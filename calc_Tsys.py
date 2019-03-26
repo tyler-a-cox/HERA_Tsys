@@ -336,8 +336,6 @@ class auto_data():
                             yhat = self.fits[(ant, pol)][0][fi]*Tsky_prime+self.fits[(ant, pol)][1][fi]
                             rss = np.sum((data[:, fi] - yhat) ** 2)
                             cov_mat[fi,:,:] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
-                        elif curve_fit_cal:
-                            cov_mat[fi,:,:] = curve_fit()
                     self.fit_cov[(ant,pol)] = cov_mat
             self._calc_Trxr_err()
 
