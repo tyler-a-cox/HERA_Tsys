@@ -332,8 +332,8 @@ class auto_data():
                         Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
                         A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
                         Q_inv = np.linalg.inv(np.matmul(A.T, A))
-                        yhat = self.fits[(ant, pol)][0][fi]*Tsky_prime+self.fits[(ant, pol)][1][fi]
-                        rss = np.sum((data[:, fi] - yhat) ** 2)
+                        yhat = self.fits[(ant, pol)][0][freq]*Tsky_prime+self.fits[(ant, pol)][1][freq]
+                        rss = np.sum((data[:, freq] - yhat) ** 2)
                         cov_mat[fi,:,:] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
                     self.fit_cov[(ant,pol)] = cov_mat
             self._calc_Trxr_err()
