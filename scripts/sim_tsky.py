@@ -36,7 +36,7 @@ sky_array = np.load(gsm_file)['sky']
 def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
               Tsky_file = None, add_noise = False, sigma = None,
               narrow = False, narrow_frac = None, widen = False,
-              widen_frac = None):
+              widen_frac = None, scale_lobes = False, scale_frac = None):
 
     lsts = np.zeros_like(hours)
     HERA_Tsky = np.zeros((len(pols), freqs.shape[0], lsts.shape[0]))
@@ -76,6 +76,9 @@ def HERA_Tsky(pols, freqs, return_sky = False, save_sky = False,
                 t[t < 0] = 0
                 p[p < 0] = 0
                 beam = hp.get_interp_val(beam, t, p)
+               
+            if scale_lobes:
+                beam[beam < 0.006] *= scale_frac
 
 
             print 'Forming HERA Tsky for frequency ' + str(freq) + ' MHz.'
