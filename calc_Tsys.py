@@ -330,11 +330,15 @@ class auto_data():
                     cov_mat = np.zeros(((freq_high+1)-freq_low, 2, 2))
                     for fi, freq in enumerate(np.arange(freq_low,(freq_high+1))):
                         Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
-                        A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
-                        Q_inv = np.linalg.inv(A.T, A)
-                        yhat = self.fits[(ant, pol)][0]*Tsky_prime+self.fits[(ant, pol)][1]
-                        rss = np.sum((data[:, ch] - yhat) ** 2)
-                    self.fit_cov[(ant,pol)] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
+                        if matmul:
+                            A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
+                            Q_inv = np.linalg.inv(np.matmul(A.T, A))
+                            yhat = self.fits[(ant, pol)][0][fi]*Tsky_prime+self.fits[(ant, pol)][1][fi]
+                            rss = np.sum((data[:, fi] - yhat) ** 2)
+                            cov_mat[fi,:,:] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
+                        elif curve_fit_cal:
+                            cov_mat[fi,:,:] = curve_fit()
+                    self.fit_cov[(ant,pol)] = cov_mat
             self._calc_Trxr_err()
 
         elif calc_fit_err:
@@ -342,7 +346,7 @@ class auto_data():
                 for ant in self.ants:
                     Tsky_prime = self.Tsky[poli, :, ch] - self.Tsky_mean[poli, ch]
                     A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
-                    Q_inv = np.linalg.inv(A.T, A)
+                    Q_inv = np.linalg.inv(np.matmul(A.T, A))
                     yhat = self.fits[(ant, pol)][0]*Tsky_prime+self.fits[(ant, pol)][1]
                     rss = np.sum((data[:, ch] - yhat) ** 2)
                     self.fit_cov[(ant,pol)] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
