@@ -268,7 +268,8 @@ class auto_data():
             self.Trxr_err[(ant, pol)] = np.sqrt(sig_g * n**2 / g**4  + sig_n * 1.0 / n**2 -
                                                 2 * sig_gn * n / g**3)
 
-    def fit_data(self, all_chans=True, ch=600, calc_fit_err=False):
+    def fit_data(self, all_chans=True, ch=600, calc_fit_err=False,
+                 absolute_sigma = False):
         """
         Fit gains and receiver temperatures based on LST evolution of signal fit to
         simulated Tsky.
@@ -332,9 +333,12 @@ class auto_data():
                         Tsky_prime = self.Tsky[poli, :, freq] - self.Tsky_mean[poli, freq]
                         A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
                         Q_inv = np.linalg.inv(np.matmul(A.T, A))
-                        yhat = self.fits[(ant, pol)][0][freq]*Tsky_prime+self.fits[(ant, pol)][1][freq]
-                        rss = np.sum((data[:, freq] - yhat) ** 2)
-                        cov_mat[fi,:,:] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
+                        if absolute_sigma:
+                            cov_mat[fi,:,:] = Q_inv
+                        else:
+                            yhat = self.fits[(ant, pol)][0][freq]*Tsky_prime+self.fits[(ant, pol)][1][freq]
+                            rss = np.sum((data[:, freq] - yhat) ** 2)
+                            cov_mat[fi,:,:] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
                     self.fit_cov[(ant,pol)] = cov_mat
             self._calc_Trxr_err()
 
@@ -344,9 +348,12 @@ class auto_data():
                     Tsky_prime = self.Tsky[poli, :, ch] - self.Tsky_mean[poli, ch]
                     A = np.column_stack([Tsky_prime, np.ones_like(Tsky_prime)])
                     Q_inv = np.linalg.inv(np.matmul(A.T, A))
-                    yhat = self.fits[(ant, pol)][0]*Tsky_prime+self.fits[(ant, pol)][1]
-                    rss = np.sum((data[:, ch] - yhat) ** 2)
-                    self.fit_cov[(ant,pol)] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
+                    if absolute_sigma:
+                        self.fit_cov[(ant,pol)] = Q_inv
+                    else:
+                        yhat = self.fits[(ant, pol)][0]*Tsky_prime+self.fits[(ant, pol)][1]
+                        rss = np.sum((data[:, ch] - yhat) ** 2)
+                        self.fit_cov[(ant,pol)] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
             self._calc_Trxr_err()
 
     def save_fits(self, file_name):
