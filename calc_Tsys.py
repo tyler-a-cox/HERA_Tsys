@@ -10,7 +10,7 @@ from scipy import interpolate
 import os
 from hera_qm import xrfi
 from hera_qm import UVFlag
-from pyuvdata import UVData
+from pyuvdata import UVData, UVBeam
 from matplotlib.colors import SymLogNorm
 
 class TskySim():
