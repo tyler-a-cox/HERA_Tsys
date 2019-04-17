@@ -216,9 +216,6 @@ class auto_data():
         self.freqs = self.uv.freq_array.flatten() * 1e-6
         self.ants = self.uv.get_ants()
 
-    def average_channels(self):
-        pass
-
     def update_freq_array(self,f_min,f_max):
         '''
         Remove frequencies outside of the range (MHz) given by user, regardless of
@@ -269,7 +266,7 @@ class auto_data():
                                                 2 * sig_gn * n / g**3)
 
     def fit_data(self, all_chans=True, ch=600, calc_fit_err=False,
-                 absolute_sigma = False):
+                 absolute_sigma = False, calc_chi2 = False):
         """
         Fit gains and receiver temperatures based on LST evolution of signal fit to
         simulated Tsky.
@@ -287,6 +284,9 @@ class auto_data():
         self.Trxr = {}
         self.fits = {}
         self.fit_cov = {}
+        self.chi2 = {}
+        Tsky_prime = self.Tsky - self.Tsky_mean[:,np.newaxis,:]
+        
         for poli, pol in enumerate(self.pols):
             for ant in self.ants:
 
@@ -322,7 +322,11 @@ class auto_data():
                 ls = linsolve.LinearSolver(d_ls, w_ls, **kwargs)
                 sol = ls.solve()
                 self.fits[(ant, pol)] = (sol['g'], sol['n'])
-
+                
+                if calc_chi2:
+                    r = data[:, :] - (sol['g']*Tsky_prime[poli, :, :]+sol['n'])
+                    self.chi2[(ant,pol)] = np.sum(r**2, axis=0) / (self.data.shape[2] - 2)
+                    
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
         if calc_fit_err and all_chans:
@@ -355,6 +359,7 @@ class auto_data():
                         rss = np.sum((data[:, ch] - yhat) ** 2)
                         self.fit_cov[(ant,pol)] = rss * Q_inv / (Tsky_prime.shape[0] - 2)
             self._calc_Trxr_err()
+ 
 
     def save_fits(self, file_name):
         np.savez(file_name, fits = self.fits, param_err = self.param_err,
