@@ -325,7 +325,7 @@ class auto_data():
                 
                 if calc_chi2:
                     r = data[:, :] - (sol['g']*Tsky_prime[poli, :, :]+sol['n'])
-                    self.chi2[(ant,pol)] = np.sum(r**2, axis=0) / (self.data.shape[2] - 2)
+                    self.chi2[(ant,pol)] = np.sum(r**2, axis=0) / (data.shape[0] - 2)
                     
         self._fits2gTrxr(all_chans=all_chans, ch=ch)
 
